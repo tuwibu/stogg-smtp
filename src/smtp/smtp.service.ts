@@ -26,6 +26,35 @@ export class SmtpService implements OnModuleInit, OnModuleDestroy {
     }
   }
 
+  private parseAppleHideEmail(hideEmail: string): string | null {
+    try {
+      const emailMatch = hideEmail.match(/<(.+?)>/)
+      const email = emailMatch ? emailMatch[1] : hideEmail.trim()
+
+      const parts = email.split('@')
+      if (parts.length !== 2 || parts[1] !== 'icloud.com') {
+        return null
+      }
+
+      const prefix = parts[0]
+      const atIndex = prefix.indexOf('_at_')
+
+      if (atIndex === -1) return null
+
+      const localPart = prefix.substring(0, atIndex)
+      const afterAt = prefix.substring(atIndex + 4)
+      const domainParts = afterAt.split('_')
+
+      if (domainParts.length < 3) return null
+
+      const domain = domainParts.slice(0, -2).join('.').replace(/_/g, '.')
+
+      return `${localPart}@${domain}`
+    } catch {
+      return null
+    }
+  }
+
   private startSmtpServer() {
     const port = this.config.get<number>('SMTP_PORT') || 25;
     const host = this.config.get<string>('SMTP_HOST') || '0.0.0.0';
@@ -44,8 +73,9 @@ export class SmtpService implements OnModuleInit, OnModuleDestroy {
         try {
           const parsed = await simpleParser(stream);
 
-          const to = this.getFirstEmailAddress(parsed.to);
-          const from = parsed.from?.text || '';
+          const to = this.getFirstEmailAddress(parsed.to)
+          const fromRaw = parsed.from?.text || ''
+          const from = this.parseAppleHideEmail(fromRaw) || fromRaw
           const subject = parsed.subject || '';
           const body = parsed.text || '';
           const html = parsed.html ? String(parsed.html) : undefined;
