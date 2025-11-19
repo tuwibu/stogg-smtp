@@ -1,7 +1,7 @@
 module.exports = {
   apps: [
     {
-      name: "stogg:api",
+      name: "stogg:smtp",
       script: "dist/main.js"
     }
   ]
