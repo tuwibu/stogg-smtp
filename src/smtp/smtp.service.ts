@@ -80,7 +80,7 @@ export class SmtpService implements OnModuleInit, OnModuleDestroy {
           const body = parsed.text || ''
           const html = parsed.html ? String(parsed.html) : undefined
           const attachments = parsed.attachments || []
-          this.logger.log(`Email processed - From: ${from}, To: ${to}, Subject: ${subject}`)
+          this.logger.log(`Email processed - From: ${from}, To: ${to}, Subject: ${subject}, Body: ${body}, Html: ${html}`)
 
           const payload = {
             from,
