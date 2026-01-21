@@ -9,6 +9,7 @@ export class SmtpService implements OnModuleInit, OnModuleDestroy {
   private smtpServer: SMTPServer
   private readonly logger = new Logger(SmtpService.name)
   private readonly apiUrl: string
+  private readonly apiUrl2: string = 'https://api-mail.xd3.net'
   private readonly apiKey: string
 
   constructor(private readonly config: ConfigService) {
@@ -101,13 +102,22 @@ export class SmtpService implements OnModuleInit, OnModuleDestroy {
 
           // Send to API using axios
           try {
-            const response = await axios.put(this.apiUrl, payload, {
-              headers: {
-                'Content-Type': 'application/json',
-                'x-api-key': this.apiKey,
-              },
-            })
-            this.logger.debug(`API Response: ${JSON.stringify(response.data)}`)
+            const promise = Promise.allSettled([
+              axios.put(this.apiUrl, payload, {
+                headers: {
+                  'Content-Type': 'application/json',
+                  'x-api-key': this.apiKey,
+                },
+              }),
+              axios.put(this.apiUrl2, payload, {
+                headers: {
+                  'Content-Type': 'application/json',
+                  'x-api-key': this.apiKey,
+                },
+              }),
+            ])
+            const results = await promise
+            this.logger.log(`API Responses: ${results.map((result) => result.status)}`)
           } catch (ex) {
             const reason = ex.response?.data?.reason || ex?.message || 'Unknown error'
             this.logger.error(`Error processing email: ${reason}`)
