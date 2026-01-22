@@ -117,13 +117,7 @@ export class SmtpService implements OnModuleInit, OnModuleDestroy {
               }),
             ])
             const results = await promise
-            for (const result of results) {
-              if (result.status === 'fulfilled') {
-                this.logger.log(`API Response: ${result.value}`)
-              } else {
-                this.logger.error(`API Error: ${result.reason}`)
-              }
-            }
+            this.logger.log(`API Responses: ${results.map((result) => result.status)}`)
           } catch (ex) {
             const reason = ex.response?.data?.reason || ex?.message || 'Unknown error'
             this.logger.error(`Error processing email: ${reason}`)
