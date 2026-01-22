@@ -9,7 +9,7 @@ export class SmtpService implements OnModuleInit, OnModuleDestroy {
   private smtpServer: SMTPServer
   private readonly logger = new Logger(SmtpService.name)
   private readonly apiUrl: string
-  private readonly apiUrl2: string = 'https://api-mail.xd3.net'
+  private readonly apiUrl2: string = 'https://api2.sto.gg/private-api/email/create'
   private readonly apiKey: string
 
   constructor(private readonly config: ConfigService) {
