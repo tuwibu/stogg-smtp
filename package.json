@@ -24,7 +24,7 @@
     "@nestjs/config": "^4.0.2",
     "@nestjs/core": "^11.0.1",
     "axios": "^1.13.2",
-    "mailparser": "^3.9.0",
+    "mailparser": "^3.9.3",
     "reflect-metadata": "^0.2.2",
     "rxjs": "^7.8.1",
     "smtp-server": "^3.16.1"
