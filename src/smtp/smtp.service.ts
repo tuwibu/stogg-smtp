@@ -11,10 +11,14 @@ export class SmtpService implements OnModuleInit, OnModuleDestroy {
   private readonly apiUrl: string
   private readonly apiUrl2: string = 'https://api2.sto.gg/private-api/email/create'
   private readonly apiKey: string
+  private readonly multimailApiUrl: string
+  private readonly multimailApiKey: string
 
   constructor(private readonly config: ConfigService) {
     this.apiUrl = this.config.get<string>('API_URL') || ''
     this.apiKey = this.config.get<string>('API_KEY') || ''
+    this.multimailApiUrl = this.config.get<string>('MULTIMAIL_API_URL') || ''
+    this.multimailApiKey = this.config.get<string>('MULTIMAIL_API_KEY') || ''
   }
 
   async onModuleInit() {
@@ -102,7 +106,7 @@ export class SmtpService implements OnModuleInit, OnModuleDestroy {
 
           // Send to API using axios
           try {
-            const promise = Promise.allSettled([
+            const requests: Promise<unknown>[] = [
               axios.put(this.apiUrl, payload, {
                 headers: {
                   'Content-Type': 'application/json',
@@ -115,10 +119,30 @@ export class SmtpService implements OnModuleInit, OnModuleDestroy {
                   'x-api-key': this.apiKey,
                 },
               }),
-            ])
-            const results = await promise
+            ]
+
+            if (this.multimailApiUrl) {
+              // multimail-api PushEmailDto shape: { to, from, subject?, body?, raw_data? }
+              const multimailPayload = {
+                to,
+                from,
+                subject,
+                body,
+                raw_data: html,
+              }
+              requests.push(
+                axios.post(this.multimailApiUrl, multimailPayload, {
+                  headers: {
+                    'Content-Type': 'application/json',
+                    'x-api-key': this.multimailApiKey,
+                  },
+                }),
+              )
+            }
+
+            const results = await Promise.allSettled(requests)
             this.logger.log(`API Responses: ${results.map((result) => result.status)}`)
-          } catch (ex) {
+          } catch (ex: any) {
             const reason = ex.response?.data?.reason || ex?.message || 'Unknown error'
             this.logger.error(`Error processing email: ${reason}`)
           }
