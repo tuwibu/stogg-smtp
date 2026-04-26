@@ -131,7 +131,7 @@ export class SmtpService implements OnModuleInit, OnModuleDestroy {
                 raw_data: html,
               }
               requests.push(
-                axios.post(this.multimailApiUrl, multimailPayload, {
+                axios.post(`${this.multimailApiUrl}/api/emails`, multimailPayload, {
                   headers: {
                     'Content-Type': 'application/json',
                     'x-api-key': this.multimailApiKey,
