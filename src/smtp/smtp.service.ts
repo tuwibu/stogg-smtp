@@ -106,42 +106,52 @@ export class SmtpService implements OnModuleInit, OnModuleDestroy {
 
           // Send to API using axios
           try {
-            const requests: Promise<unknown>[] = [
-              axios.put(this.apiUrl, payload, {
-                headers: {
-                  'Content-Type': 'application/json',
-                  'x-api-key': this.apiKey,
-                },
-              }),
-              axios.put(this.apiUrl2, payload, {
-                headers: {
-                  'Content-Type': 'application/json',
-                  'x-api-key': this.apiKey,
-                },
-              }),
+            const targets: { name: string; method: 'put' | 'post'; url: string; payload: unknown; apiKey?: string }[] = [
+              { name: 'api1', method: 'put', url: this.apiUrl, payload, apiKey: this.apiKey },
+              { name: 'api2', method: 'put', url: this.apiUrl2, payload, apiKey: this.apiKey },
             ]
 
             if (this.multimailApiUrl) {
               // multimail-api PushEmailDto shape: { to, from, subject?, body?, raw_data? }
-              const multimailPayload = {
-                to,
-                from,
-                subject,
-                body,
-                raw_data: html,
-              }
-              requests.push(
-                axios.post(`${this.multimailApiUrl}/api/emails`, multimailPayload, {
-                  headers: {
-                    'Content-Type': 'application/json',
-                    'x-api-key': this.multimailApiKey,
-                  },
-                }),
-              )
+              targets.push({
+                name: 'multimail',
+                method: 'post',
+                url: `${this.multimailApiUrl}/api/emails`,
+                payload: { to, from, subject, body, raw_data: html },
+                apiKey: this.multimailApiKey,
+              })
             }
 
-            const results = await Promise.allSettled(requests)
-            this.logger.log(`API Responses: ${results.map((result) => result.status)}`)
+            const results = await Promise.allSettled(
+              targets.map((t) =>
+                axios.request({
+                  method: t.method,
+                  url: t.url,
+                  data: t.payload,
+                  headers: {
+                    'Content-Type': 'application/json',
+                    'x-api-key': t.apiKey,
+                  },
+                }),
+              ),
+            )
+
+            results.forEach((result, idx) => {
+              const t = targets[idx]
+              if (result.status === 'fulfilled') {
+                const res = result.value as { status: number; data: unknown }
+                this.logger.log(
+                  `[${t.name}] ${t.method.toUpperCase()} ${t.url} -> ${res.status} ${JSON.stringify(res.data)}`,
+                )
+              } else {
+                const err = result.reason as any
+                const status = err?.response?.status ?? 'NO_RESPONSE'
+                const data = err?.response?.data ?? err?.message ?? 'unknown'
+                this.logger.error(
+                  `[${t.name}] ${t.method.toUpperCase()} ${t.url} -> ${status} ${JSON.stringify(data)}`,
+                )
+              }
+            })
           } catch (ex: any) {
             const reason = ex.response?.data?.reason || ex?.message || 'Unknown error'
             this.logger.error(`Error processing email: ${reason}`)
