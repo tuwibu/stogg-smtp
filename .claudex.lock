@@ -1,7 +1,7 @@
 {
-  "version": "1.2.4",
+  "version": "1.2.9",
   "plan": "internal",
-  "installed_at": "2026-04-24T14:06:40.0328576Z",
-  "checksum": "sha256:76825aeaa1d34c48904b9c384761e44a58c003f43544b4001abd314f57f722e2",
+  "installed_at": "2026-04-29T10:33:49.2059991Z",
+  "checksum": "sha256:9a126e5f79a8fc118b0ff36d77b7a17b07defaf95a302542412583c9f331761d",
   "cli_version": "dev"
 }

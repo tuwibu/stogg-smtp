@@ -6,17 +6,12 @@ import axios from 'axios'
 
 @Injectable()
 export class SmtpService implements OnModuleInit, OnModuleDestroy {
-  private smtpServer: SMTPServer
+  private smtpServer!: SMTPServer
   private readonly logger = new Logger(SmtpService.name)
-  private readonly apiUrl: string
-  private readonly apiUrl2: string = 'https://api2.sto.gg/private-api/email/create'
-  private readonly apiKey: string
   private readonly multimailApiUrl: string
   private readonly multimailApiKey: string
 
   constructor(private readonly config: ConfigService) {
-    this.apiUrl = this.config.get<string>('API_URL') || ''
-    this.apiKey = this.config.get<string>('API_KEY') || ''
     this.multimailApiUrl = this.config.get<string>('MULTIMAIL_API_URL') || ''
     this.multimailApiKey = this.config.get<string>('MULTIMAIL_API_KEY') || ''
   }
@@ -84,77 +79,30 @@ export class SmtpService implements OnModuleInit, OnModuleDestroy {
           const subject = parsed.subject || ''
           const body = parsed.text || ''
           const html = parsed.html ? String(parsed.html) : undefined
-          const attachments = parsed.attachments || []
           if (from.includes('@apple.com')) {
             this.logger.log(`Email processed - From: ${from}, To: ${to}, Subject: ${subject}, Body: ${body}`)
           } else {
             this.logger.log(`Email processed - From: ${from}, To: ${to}, Subject: ${subject}`)
           }
 
-          const payload = {
-            from,
-            to,
-            subject,
-            body,
-            html,
-            attachments: attachments.map((att) => ({
-              filename: att.filename || 'unknown',
-              size: att.size,
-              contentType: att.contentType,
-            })),
-          }
-
-          // Send to API using axios
+          // multimail-api PushEmailDto shape: { to, from, subject?, body?, raw_data? }
+          const url = `${this.multimailApiUrl}/api/emails`
           try {
-            const targets: { name: string; method: 'put' | 'post'; url: string; payload: unknown; apiKey?: string }[] = [
-              { name: 'api1', method: 'put', url: this.apiUrl, payload, apiKey: this.apiKey },
-              { name: 'api2', method: 'put', url: this.apiUrl2, payload, apiKey: this.apiKey },
-            ]
-
-            if (this.multimailApiUrl) {
-              // multimail-api PushEmailDto shape: { to, from, subject?, body?, raw_data? }
-              targets.push({
-                name: 'multimail',
-                method: 'post',
-                url: `${this.multimailApiUrl}/api/emails`,
-                payload: { to, from, subject, body, raw_data: html },
-                apiKey: this.multimailApiKey,
-              })
-            }
-
-            const results = await Promise.allSettled(
-              targets.map((t) =>
-                axios.request({
-                  method: t.method,
-                  url: t.url,
-                  data: t.payload,
-                  headers: {
-                    'Content-Type': 'application/json',
-                    'x-api-key': t.apiKey,
-                  },
-                }),
-              ),
+            const res = await axios.post(
+              url,
+              { to, from, subject, body, raw_data: html },
+              {
+                headers: {
+                  'Content-Type': 'application/json',
+                  'x-api-key': this.multimailApiKey,
+                },
+              },
             )
-
-            results.forEach((result, idx) => {
-              const t = targets[idx]
-              if (result.status === 'fulfilled') {
-                const res = result.value as { status: number; data: unknown }
-                this.logger.log(
-                  `[${t.name}] ${t.method.toUpperCase()} ${t.url} -> ${res.status} ${JSON.stringify(res.data)}`,
-                )
-              } else {
-                const err = result.reason as any
-                const status = err?.response?.status ?? 'NO_RESPONSE'
-                const data = err?.response?.data ?? err?.message ?? 'unknown'
-                this.logger.error(
-                  `[${t.name}] ${t.method.toUpperCase()} ${t.url} -> ${status} ${JSON.stringify(data)}`,
-                )
-              }
-            })
+            this.logger.log(`[multimail] POST ${url} -> ${res.status} ${JSON.stringify(res.data)}`)
           } catch (ex: any) {
-            const reason = ex.response?.data?.reason || ex?.message || 'Unknown error'
-            this.logger.error(`Error processing email: ${reason}`)
+            const status = ex?.response?.status ?? 'NO_RESPONSE'
+            const data = ex?.response?.data ?? ex?.message ?? 'unknown'
+            this.logger.error(`[multimail] POST ${url} -> ${status} ${JSON.stringify(data)}`)
           }
 
           callback()
