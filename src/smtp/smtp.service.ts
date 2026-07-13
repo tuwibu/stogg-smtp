@@ -85,12 +85,12 @@ export class SmtpService implements OnModuleInit, OnModuleDestroy {
             this.logger.log(`Email processed - From: ${from}, To: ${to}, Subject: ${subject}`)
           }
 
-          // multimail-api PushEmailDto shape: { to, from, subject?, body?, raw_data? }
+          // multimail-api PushEmailDto shape: { to, from, subject?, body?, raw_data?, message_id? }
           const url = `${this.multimailApiUrl}/api/emails`
           try {
             const res = await axios.post(
               url,
-              { to, from, subject, body, raw_data: html },
+              { to, from, subject, body, raw_data: html, message_id: parsed.messageId || undefined },
               {
                 headers: {
                   'Content-Type': 'application/json',
@@ -103,6 +103,17 @@ export class SmtpService implements OnModuleInit, OnModuleDestroy {
             const status = ex?.response?.status ?? 'NO_RESPONSE'
             const data = ex?.response?.data ?? ex?.message ?? 'unknown'
             this.logger.error(`[multimail] POST ${url} -> ${status} ${JSON.stringify(data)}`)
+
+            // 4xx = payload/auth problem — retrying the same mail is useless, accept
+            // and rely on logs. 5xx/no-response = multimail down — reply 451 so the
+            // sending relay keeps the mail queued and retries later (no silent loss;
+            // redelivery is deduped upstream via message_id).
+            if (typeof status !== 'number' || status >= 500) {
+              const err: any = new Error('Upstream mail store unavailable, try again later')
+              err.responseCode = 451
+              callback(err)
+              return
+            }
           }
 
           callback()
