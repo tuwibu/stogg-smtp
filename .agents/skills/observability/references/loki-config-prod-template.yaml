@@ -1,0 +1,51 @@
+# Loki single-binary config — PROD: chunk/index storage on Backblaze B2 (S3-compatible).
+# Env vars expanded at runtime via -config.expand-env=true (set in docker-compose.yml).
+# B2_ENDPOINT / B2_BUCKET / B2_ACCESS_KEY_ID / B2_SECRET_ACCESS_KEY come from .env.
+
+auth_enabled: false  # single-tenant; auth enforced at Caddy bearer-token gate
+
+server:
+  http_listen_port: 3100
+  grpc_listen_port: 9096
+
+common:
+  path_prefix: /loki
+  replication_factor: 1
+  ring:
+    kvstore:
+      store: inmemory
+
+schema_config:
+  configs:
+    - from: "2024-01-01"
+      store: tsdb
+      object_store: s3
+      schema: v13
+      index:
+        prefix: index_
+        period: 24h
+
+storage_config:
+  tsdb_shipper:
+    active_index_directory: /loki/index
+    cache_location: /loki/index_cache
+  aws:
+    endpoint: ${B2_ENDPOINT}
+    bucketnames: ${B2_BUCKET}
+    access_key_id: ${B2_ACCESS_KEY_ID}
+    secret_access_key: ${B2_SECRET_ACCESS_KEY}
+    s3forcepathstyle: true
+    region: us-east-1  # B2 ignores this value; AWS SDK requires non-empty
+
+compactor:
+  working_directory: /loki/compactor
+  retention_enabled: true
+  delete_request_store: s3
+
+limits_config:
+  retention_period: 720h  # 30 days; adjust per project requirements
+  ingestion_rate_mb: 8
+  ingestion_burst_size_mb: 16
+  reject_old_samples: true
+  reject_old_samples_max_age: 24h
+  max_label_names_per_series: 10

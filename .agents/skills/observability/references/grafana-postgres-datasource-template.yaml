@@ -1,0 +1,23 @@
+# grafana/provisioning/datasources/postgres.yaml
+# Read-only Postgres datasource for domain dashboards (rollup/aggregation tables only).
+# Role created by sql/create-grafana-readonly-user.sql — SELECT only, never users/profiles.
+# Env vars injected from docker-compose.yml environment block.
+apiVersion: 1
+
+datasources:
+  - name: Postgres (rollup, read-only)
+    uid: postgres-rollup
+    type: postgres
+    access: proxy
+    url: ${GRAFANA_PG_HOST}:${GRAFANA_PG_PORT}
+    database: ${GRAFANA_PG_DB}
+    user: grafana_ro
+    secureJsonData:
+      password: ${GRAFANA_PG_PASSWORD}
+    jsonData:
+      sslmode: disable        # internal network; change to "require" if PG is remote
+      postgresVersion: 1500   # PostgreSQL 15; adjust to match your version
+      timescaledb: false
+      maxOpenConns: 4
+      timezone: UTC           # dashboard SQL should assume UTC; apply offset in queries
+    editable: false

@@ -1,0 +1,17 @@
+# grafana/provisioning/dashboards/dashboards.yaml
+# Dashboard provider — tells Grafana where to load provisioned JSON files from.
+# NOTE: UI edits to provisioned dashboards are NOT persisted back to JSON files;
+# they revert on Grafana restart. Always edit the JSON files in grafana/dashboards/.
+apiVersion: 1
+
+providers:
+  - name: {{PROJECT_SLUG}}
+    orgId: 1
+    folder: "{{FOLDER_DISPLAY_NAME}}"   # e.g. "My Project" — shown in Grafana sidebar
+    type: file
+    disableDeletion: false
+    updateIntervalSeconds: 30           # Grafana polls for new/updated JSON every 30s
+    allowUiUpdates: true                # allow temporary UI edits (not persisted)
+    options:
+      path: /var/lib/grafana/dashboards
+      foldersFromFilesStructure: false

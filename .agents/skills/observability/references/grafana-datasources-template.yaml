@@ -1,0 +1,20 @@
+# grafana/provisioning/datasources/datasources.yaml
+# Core datasources: Loki (logs) + VictoriaMetrics (metrics).
+# UIDs are stable — dashboards reference them directly; do NOT change.
+apiVersion: 1
+
+datasources:
+  - name: Loki
+    uid: loki
+    type: loki
+    access: proxy
+    url: http://loki:3100
+    isDefault: true
+    editable: false
+
+  - name: VictoriaMetrics
+    uid: victoriametrics
+    type: prometheus
+    access: proxy
+    url: http://victoriametrics:8428
+    editable: false

@@ -1,0 +1,156 @@
+# Deep Workflow
+
+Full pipeline with research, brainstorming, and planning for complex issues. Uses native Codex task plan items with dependency chains.
+
+## Task Setup (Before Starting)
+
+Create all phase tasks upfront. Steps 1+2+3 run in parallel (scout + diagnose + research).
+
+```
+T1 = update_plan(subject="Scout codebase",              activeForm="Scouting codebase",          metadata={phase: "investigate"})
+T2 = update_plan(subject="Diagnose root cause",          activeForm="Diagnosing root cause",      metadata={phase: "investigate"})
+T3 = update_plan(subject="Research solutions",            activeForm="Researching solutions",      metadata={phase: "investigate"})
+T4 = update_plan(subject="Brainstorm approaches",         activeForm="Brainstorming",              metadata={phase: "design"},       addBlockedBy=[T1, T2, T3])
+T5 = update_plan(subject="Create implementation plan",    activeForm="Planning implementation",    metadata={phase: "design"},       addBlockedBy=[T4])
+T6 = update_plan(subject="Implement fix",                 activeForm="Implementing fix",           metadata={phase: "implement"},    addBlockedBy=[T5])
+T7 = update_plan(subject="Verify + prevent",              activeForm="Verifying fix",              metadata={phase: "verify"},       addBlockedBy=[T6])
+T8 = update_plan(subject="Code review",                   activeForm="Reviewing code",             metadata={phase: "verify"},       addBlockedBy=[T7])
+T9 = update_plan(subject="Finalize & docs",               activeForm="Finalizing",                 metadata={phase: "finalize"},     addBlockedBy=[T8])
+```
+
+## Steps
+
+### Step 1: Scout Codebase (parallel with Steps 2+3)
+`update_plan(T1, status="in_progress")`
+
+**Mandatory:** Activate `scout` skill or launch 2-3 `Explore` subagents in parallel:
+```
+Task("Explore", "Find error origin and affected components", "Trace error")
+Task("Explore", "Find module boundaries and dependencies", "Map deps")
+Task("Explore", "Find related tests and similar patterns", "Find patterns")
+```
+
+Map: all affected files, module boundaries, call chains, test coverage gaps.
+
+See `references/parallel-exploration.md` for patterns.
+
+`update_plan(T1, status="completed")`
+**Output:** `✓ Step 1: Scouted - [N] files, system impact: [scope]`
+
+### Step 2: Diagnose Root Cause (parallel with Steps 1+3)
+`update_plan(T2, status="in_progress")`
+
+**Mandatory skill chain:**
+1. **Capture pre-fix state:** Record ALL error messages, failing tests, stack traces, logs.
+2. Activate `debug` skill (systematic-debugging + root-cause-tracing).
+3. Activate `sequential-thinking` — structured hypothesis formation.
+4. Spawn parallel `Explore` subagents to test each hypothesis.
+5. If 2+ hypotheses fail → auto-activate `problem-solving`.
+6. Trace backward through call chain to ROOT CAUSE origin.
+
+See `references/diagnosis-protocol.md` for full methodology.
+
+`update_plan(T2, status="completed")`
+**Output:** `✓ Step 2: Diagnosed - Root cause: [summary], Evidence: [chain]`
+
+### Step 3: Research (parallel with Steps 1+2)
+`update_plan(T3, status="in_progress")`
+Use `researcher` subagent for external knowledge.
+
+- Search latest docs, best practices
+- Find similar issues/solutions
+- Gather security advisories if relevant
+
+`update_plan(T3, status="completed")`
+**Output:** `✓ Step 3: Research complete - [key findings]`
+
+### Step 4: Brainstorm
+`update_plan(T4, status="in_progress")` — auto-unblocks when T1 + T2 + T3 complete.
+Activate `brainstorm` skill.
+
+- Evaluate multiple approaches using scout + diagnosis + research findings
+- Consider trade-offs
+- Get user input on preferred direction
+
+`update_plan(T4, status="completed")`
+**Output:** `✓ Step 4: Approach selected - [chosen approach]`
+
+### Step 5: Plan
+`update_plan(T5, status="in_progress")`
+Use `planner` subagent to create implementation plan.
+
+- Break down into phases
+- Identify dependencies
+- Define success criteria
+- Include prevention measures in plan
+
+`update_plan(T5, status="completed")`
+**Output:** `✓ Step 5: Plan created - [N] phases`
+
+### Step 6: Implement
+`update_plan(T6, status="in_progress")`
+Implement per plan. Use `sequential-thinking`, `problem-solving`.
+
+- Fix ROOT CAUSE per diagnosis — not symptoms
+- Follow plan phases
+- Minimal changes per phase
+
+`update_plan(T6, status="completed")`
+**Output:** `✓ Step 6: Implemented - [N] files, [M] phases`
+
+### Step 7: Verify + Prevent
+`update_plan(T7, status="in_progress")`
+
+**Mandatory skill chain:**
+1. **Iron-law verify:** Re-run EXACT commands from pre-fix state. Compare before/after.
+2. **Regression test:** Add comprehensive tests. Tests MUST fail without fix, pass with fix.
+3. **Side-effect sweep (HARD-GATE-NO-SIDE-EFFECTS):** Walk each dependent caller of changed functions from Step 1 blast-radius. Run tests in modules that share files/contracts. Confirm public contracts (signatures, schemas, APIs, env vars) unchanged. See SKILL.md HARD-GATE-NO-SIDE-EFFECTS.
+4. **Defense-in-depth:** Apply all relevant prevention layers (see `references/prevention-gate.md`).
+5. **Parallel verification:** Launch `Bash` agents: typecheck + lint + build + test.
+6. **Edge cases:** Test boundary conditions, security implications, performance impact.
+
+**On regression / side effect:** `AskUserQuestion` with 2-4 concrete options (revert / narrow scope / update dependents / accept). Never silently patch.
+
+**If verification fails:** Loop back to Step 2 (re-diagnose). Max 3 attempts → question architecture.
+
+See `references/prevention-gate.md` for prevention requirements.
+
+`update_plan(T7, status="completed")`
+**Output:** `✓ Step 7: Verified + Prevented - [before/after], [N] tests, [M] guards`
+
+### Step 8: Code Review
+`update_plan(T8, status="in_progress")`
+Use `code-reviewer` subagent.
+
+See `references/review-cycle.md` for mode-specific handling.
+
+`update_plan(T8, status="completed")`
+**Output:** `✓ Step 8: Review [score]/10 - [status]`
+
+### Step 9: Finalize
+`update_plan(T9, status="in_progress")`
+- Report summary: root cause, evidence chain, changes, prevention measures, confidence score
+- Activate `project-management` for task sync-back, plan status updates, and progress tracking
+- Use `docs-manager` subagent for documentation
+- Use `git-manager` subagent for commit
+- Run `/journal`
+
+`update_plan(T9, status="completed")`
+**Output:** `✓ Step 9: Complete - [actions taken]`
+
+## Skills/Subagents Activated
+
+| Step | Skills/Subagents |
+|------|------------------|
+| 1 | `scout` OR parallel `Explore` subagents |
+| 2 | `debug`, `sequential-thinking`, parallel `Explore`, (`problem-solving` auto) |
+| 3 | `researcher` (runs parallel with steps 1+2) |
+| 4 | `brainstorm` |
+| 5 | `planner` |
+| 7 | `tester`, parallel `Bash` verification |
+| 8 | `code-reviewer` |
+| 9 | `project-management`, `docs-manager`, `git-manager` |
+
+**Rules:** Don't skip steps. Validate before proceeding. One phase at a time.
+**Frontend:** Use `browser`, `browser`, Chrome MCP / `chrome-devtools-mcp`, or any relevant project-native browser tests to verify.
+**Visual Assets:** Use `ai-multimodal` for visual assets generation, analysis and verification.

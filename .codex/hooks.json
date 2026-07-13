@@ -1,0 +1,163 @@
+{
+  "hooks": {
+    "SessionStart": [
+      {
+        "matcher": "startup|resume|clear|compact",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "node -e \"const cp=require('child_process'),p=require('path');const root=(cp.spawnSync('git',['rev-parse','--show-toplevel'],{encoding:'utf8'}).stdout||process.cwd()).trim();const r=cp.spawnSync(process.execPath,[p.join(root,'.codex','hooks','session-init.cjs')],{stdio:'inherit',env:process.env});process.exit(r.status??0)\"",
+            "statusMessage": "Loading ClaudeKit session context"
+          },
+          {
+            "type": "command",
+            "command": "node -e \"const cp=require('child_process'),p=require('path');const root=(cp.spawnSync('git',['rev-parse','--show-toplevel'],{encoding:'utf8'}).stdout||process.cwd()).trim();const r=cp.spawnSync(process.execPath,[p.join(root,'.codex','hooks','usage-quota-cache-refresh.cjs')],{stdio:'inherit',env:process.env});process.exit(r.status??0)\"",
+            "statusMessage": "Refreshing usage cache"
+          }
+        ]
+      }
+    ],
+    "UserPromptSubmit": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "node -e \"const cp=require('child_process'),p=require('path');const root=(cp.spawnSync('git',['rev-parse','--show-toplevel'],{encoding:'utf8'}).stdout||process.cwd()).trim();const r=cp.spawnSync(process.execPath,[p.join(root,'.codex','hooks','simplify-gate.cjs')],{stdio:'inherit',env:process.env});process.exit(r.status??0)\"",
+            "statusMessage": "Checking simplify gate"
+          },
+          {
+            "type": "command",
+            "command": "node -e \"const cp=require('child_process'),p=require('path');const root=(cp.spawnSync('git',['rev-parse','--show-toplevel'],{encoding:'utf8'}).stdout||process.cwd()).trim();const r=cp.spawnSync(process.execPath,[p.join(root,'.codex','hooks','dev-rules-reminder.cjs')],{stdio:'inherit',env:process.env});process.exit(r.status??0)\"",
+            "statusMessage": "Loading development rules"
+          },
+          {
+            "type": "command",
+            "command": "node -e \"const cp=require('child_process'),p=require('path');const root=(cp.spawnSync('git',['rev-parse','--show-toplevel'],{encoding:'utf8'}).stdout||process.cwd()).trim();const r=cp.spawnSync(process.execPath,[p.join(root,'.codex','hooks','usage-quota-cache-refresh.cjs')],{stdio:'inherit',env:process.env});process.exit(r.status??0)\"",
+            "statusMessage": "Refreshing usage cache"
+          }
+        ]
+      }
+    ],
+    "SubagentStart": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "node -e \"const cp=require('child_process'),p=require('path');const root=(cp.spawnSync('git',['rev-parse','--show-toplevel'],{encoding:'utf8'}).stdout||process.cwd()).trim();const r=cp.spawnSync(process.execPath,[p.join(root,'.codex','hooks','subagent-init.cjs')],{stdio:'inherit',env:process.env});process.exit(r.status??0)\"",
+            "statusMessage": "Loading subagent context"
+          }
+        ]
+      }
+    ],
+    "PreToolUse": [
+      {
+        "matcher": "apply_patch|Edit|Write",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "node -e \"const cp=require('child_process'),p=require('path');const root=(cp.spawnSync('git',['rev-parse','--show-toplevel'],{encoding:'utf8'}).stdout||process.cwd()).trim();const r=cp.spawnSync(process.execPath,[p.join(root,'.codex','hooks','descriptive-name.cjs')],{stdio:'inherit',env:process.env});process.exit(r.status??0)\"",
+            "statusMessage": "Checking filename clarity"
+          }
+        ]
+      },
+      {
+        "matcher": "Bash|apply_patch|Edit|Write|mcp__.*",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "node -e \"const cp=require('child_process'),p=require('path');const root=(cp.spawnSync('git',['rev-parse','--show-toplevel'],{encoding:'utf8'}).stdout||process.cwd()).trim();const r=cp.spawnSync(process.execPath,[p.join(root,'.codex','hooks','scout-block.cjs')],{stdio:'inherit',env:process.env});process.exit(r.status??0)\"",
+            "statusMessage": "Checking blocked paths"
+          },
+          {
+            "type": "command",
+            "command": "node -e \"const cp=require('child_process'),p=require('path');const root=(cp.spawnSync('git',['rev-parse','--show-toplevel'],{encoding:'utf8'}).stdout||process.cwd()).trim();const r=cp.spawnSync(process.execPath,[p.join(root,'.codex','hooks','privacy-block.cjs')],{stdio:'inherit',env:process.env});process.exit(r.status??0)\"",
+            "statusMessage": "Checking sensitive paths"
+          }
+        ]
+      },
+      {
+        "matcher": "Bash|apply_patch|Write",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "node -e \"const cp=require('child_process'),p=require('path');const root=(cp.spawnSync('git',['rev-parse','--show-toplevel'],{encoding:'utf8'}).stdout||process.cwd()).trim();const r=cp.spawnSync(process.execPath,[p.join(root,'.codex','hooks','db-readonly-guard.cjs')],{stdio:'inherit',env:process.env});process.exit(r.status??0)\"",
+            "statusMessage": "Checking database write guard"
+          },
+          {
+            "type": "command",
+            "command": "node -e \"const cp=require('child_process'),p=require('path');const root=(cp.spawnSync('git',['rev-parse','--show-toplevel'],{encoding:'utf8'}).stdout||process.cwd()).trim();const r=cp.spawnSync(process.execPath,[p.join(root,'.codex','hooks','git-safety-guard.cjs')],{stdio:'inherit',env:process.env});process.exit(r.status??0)\"",
+            "statusMessage": "Checking destructive git operations"
+          }
+        ]
+      },
+      {
+        "matcher": "mcp__.*",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "node -e \"const cp=require('child_process'),p=require('path');const root=(cp.spawnSync('git',['rev-parse','--show-toplevel'],{encoding:'utf8'}).stdout||process.cwd()).trim();const r=cp.spawnSync(process.execPath,[p.join(root,'.codex','hooks','env-dev-guard.cjs')],{stdio:'inherit',env:process.env});process.exit(r.status??0)\"",
+            "statusMessage": "Checking dev datastore target"
+          }
+        ]
+      },
+      {
+        "matcher": "Bash",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "node -e \"const cp=require('child_process'),p=require('path');const root=(cp.spawnSync('git',['rev-parse','--show-toplevel'],{encoding:'utf8'}).stdout||process.cwd()).trim();const r=cp.spawnSync(process.execPath,[p.join(root,'.codex','hooks','secrets-scanner-pre-commit.cjs')],{stdio:'inherit',env:process.env});process.exit(r.status??0)\"",
+            "statusMessage": "Scanning staged diff for secrets"
+          }
+        ]
+      }
+    ],
+    "PostToolUse": [
+      {
+        "matcher": "apply_patch|Edit|Write",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "node -e \"const cp=require('child_process'),p=require('path');const root=(cp.spawnSync('git',['rev-parse','--show-toplevel'],{encoding:'utf8'}).stdout||process.cwd()).trim();const r=cp.spawnSync(process.execPath,[p.join(root,'.codex','hooks','plan-format-kanban.cjs')],{stdio:'inherit',env:process.env});process.exit(r.status??0)\"",
+            "statusMessage": "Checking plan format"
+          },
+          {
+            "type": "command",
+            "command": "node -e \"const cp=require('child_process'),p=require('path');const root=(cp.spawnSync('git',['rev-parse','--show-toplevel'],{encoding:'utf8'}).stdout||process.cwd()).trim();const r=cp.spawnSync(process.execPath,[p.join(root,'.codex','hooks','post-write-typecheck.cjs')],{stdio:'inherit',env:process.env});process.exit(r.status??0)\"",
+            "statusMessage": "Typechecking written file"
+          }
+        ]
+      }
+    ],
+    "SubagentStop": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "node -e \"const cp=require('child_process'),p=require('path');const root=(cp.spawnSync('git',['rev-parse','--show-toplevel'],{encoding:'utf8'}).stdout||process.cwd()).trim();const r=cp.spawnSync(process.execPath,[p.join(root,'.codex','hooks','chain-reminder.cjs')],{stdio:'inherit',env:process.env});process.exit(r.status??0)\"",
+            "statusMessage": "Checking workflow chain reminder"
+          }
+        ]
+      },
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "node -e \"const cp=require('child_process'),p=require('path');const root=(cp.spawnSync('git',['rev-parse','--show-toplevel'],{encoding:'utf8'}).stdout||process.cwd()).trim();const r=cp.spawnSync(process.execPath,[p.join(root,'.codex','hooks','session-state.cjs')],{stdio:'inherit',env:process.env});process.exit(r.status??0)\"",
+            "statusMessage": "Saving session state"
+          }
+        ]
+      }
+    ],
+    "Stop": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "node -e \"const cp=require('child_process'),p=require('path');const root=(cp.spawnSync('git',['rev-parse','--show-toplevel'],{encoding:'utf8'}).stdout||process.cwd()).trim();const r=cp.spawnSync(process.execPath,[p.join(root,'.codex','hooks','session-state.cjs')],{stdio:'inherit',env:process.env});process.exit(r.status??0)\"",
+            "statusMessage": "Saving session state"
+          }
+        ]
+      }
+    ]
+  }
+}

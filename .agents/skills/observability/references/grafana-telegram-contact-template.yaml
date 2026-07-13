@@ -1,0 +1,66 @@
+# grafana/provisioning/alerting/telegram-contact.yaml
+#
+# ⚠ CRASH-LOOP WARNING:
+#   Grafana crash-loops on startup if ALERT_TELEGRAM_BOT_TOKEN or
+#   ALERT_TELEGRAM_CHAT_ID are empty strings. The alert provisioning subsystem
+#   validates the contact point at boot time — an empty token is fatal.
+#
+#   Local dev: set DUMMY (non-empty) values in .env, e.g.:
+#     ALERT_TELEGRAM_BOT_TOKEN=000000:local-dummy-token
+#     ALERT_TELEGRAM_CHAT_ID=local-dummy
+#
+#   Prod: copy real values from your API's .env (same bot + chat channel).
+#   Do NOT create a separate bot — share one Telegram channel for all alerts.
+
+apiVersion: 1
+
+contactPoints:
+  - orgId: 1
+    name: Telegram
+    receivers:
+      - uid: telegram-receiver
+        type: telegram
+        settings:
+          bottoken: $ALERT_TELEGRAM_BOT_TOKEN
+          chatid: $ALERT_TELEGRAM_CHAT_ID
+          # Optional: parse_mode controls message formatting.
+          # "HTML" enables <b>bold</b>, <code>code</code> in alert templates.
+          parse_mode: HTML
+        disableResolveMessage: false
+
+# ── Example alert rule (add to a separate file per alert group) ──────────────
+# File: grafana/provisioning/alerting/{{ALERT_SLUG}}.yaml
+#
+# apiVersion: 1
+# groups:
+#   - orgId: 1
+#     name: {{ALERT_GROUP_NAME}}
+#     folder: Alerts
+#     interval: 1m
+#     rules:
+#       - uid: {{ALERT_RULE_UID}}
+#         title: "{{ALERT_TITLE}}"
+#         condition: C
+#         data:
+#           - refId: A
+#             datasourceUid: victoriametrics
+#             model:
+#               expr: "{{PROMQL_EXPRESSION}}"
+#               instant: true
+#           - refId: C
+#             datasourceUid: "__expr__"
+#             model:
+#               type: threshold
+#               conditions:
+#                 - evaluator: { params: [{{THRESHOLD}}], type: gt }
+#                   query: { params: [A] }
+#         noDataState: NoData
+#         execErrState: Error
+#         for: 5m
+#         annotations:
+#           summary: "{{ALERT_SUMMARY}}"
+#           description: "{{ALERT_DESCRIPTION}}"
+#         labels:
+#           severity: warning
+#         notification_settings:
+#           receiver: Telegram

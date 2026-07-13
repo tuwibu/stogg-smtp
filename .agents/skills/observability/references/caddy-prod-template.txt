@@ -1,0 +1,45 @@
+# Caddyfile — PROD: TLS via Let's Encrypt ACME + bearer-token auth for agent push.
+#
+# Subdomains required (both must have A records pointing to this VPS):
+#   obs.<DOMAIN>     — agent push endpoint (Loki + VictoriaMetrics)
+#   grafana.<DOMAIN> — Grafana UI
+#
+# Env vars injected by docker-compose.yml:
+#   DOMAIN, ACME_EMAIL, FLEET_PUSH_TOKEN
+#
+# Agent fleet config:
+#   MP_TELEMETRY_ENDPOINT = https://obs.{$DOMAIN}
+#   MP_TELEMETRY_TOKEN    = {$FLEET_PUSH_TOKEN}   (must match exactly, else 401)
+
+{
+	email {$ACME_EMAIL}
+}
+
+obs.{$DOMAIN} {
+	@lokiPush {
+		path /loki/api/v1/push
+		header Authorization "Bearer {$FLEET_PUSH_TOKEN}"
+	}
+	# Text-exposition import path used by Go agent fleet.
+	# Add /api/v1/write if agents switch to Prometheus remote_write.
+	@vmPush {
+		path /api/v1/import/prometheus
+		header Authorization "Bearer {$FLEET_PUSH_TOKEN}"
+	}
+
+	handle @lokiPush {
+		reverse_proxy loki:3100
+	}
+	handle @vmPush {
+		reverse_proxy victoriametrics:8428
+	}
+
+	# Wrong token or wrong path → hard reject.
+	handle {
+		respond "unauthorized" 401
+	}
+}
+
+grafana.{$DOMAIN} {
+	reverse_proxy grafana:3000
+}

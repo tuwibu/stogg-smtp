@@ -1,0 +1,33 @@
+# Caddyfile.local — LOCAL DEV ONLY: plain HTTP on :9090, no TLS, no domain.
+# Mounted via docker-compose.override.yml.
+# Route logic is identical to prod — same paths, same bearer-token gate.
+#
+# Agent config for local dev:
+#   MP_TELEMETRY_ENDPOINT = http://localhost:9090
+#   MP_TELEMETRY_TOKEN    = value of FLEET_PUSH_TOKEN in .env
+
+{
+	auto_https off
+}
+
+:9090 {
+	@lokiPush {
+		path /loki/api/v1/push
+		header Authorization "Bearer {$FLEET_PUSH_TOKEN}"
+	}
+	@vmPush {
+		path /api/v1/import/prometheus
+		header Authorization "Bearer {$FLEET_PUSH_TOKEN}"
+	}
+
+	handle @lokiPush {
+		reverse_proxy loki:3100
+	}
+	handle @vmPush {
+		reverse_proxy victoriametrics:8428
+	}
+
+	handle {
+		respond "unauthorized" 401
+	}
+}

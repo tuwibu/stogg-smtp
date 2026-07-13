@@ -1,0 +1,72 @@
+{
+  "$schema": "./schemas/ck-config.schema.json",
+  "codingLevel": 4,
+  "statusline": "full",
+  "statuslineColors": true,
+  "privacyBlock": true,
+  "workflow": {
+    "hasTests": false,
+    "skipBlockers": ["cook", "fix"],
+    "simplifyThreshold": { "maxLoc": 30, "maxFiles": 2 },
+    "chains": {
+      "brainstorm": ["plan", "cook", "test", "simplify", "docs", "git"],
+      "plan": ["cook", "test", "simplify", "docs", "git"],
+      "cook": ["test", "simplify", "docs", "git"],
+      "debug": ["fix", "docs", "git"],
+      "fix": ["docs", "git"],
+      "test": ["docs", "git"],
+      "simplify": ["docs", "git"],
+      "docs": ["git"]
+    }
+  },
+  "docs": {
+    "maxLoc": 800
+  },
+  "memory": {
+    "businessDir": "docs/memory"
+  },
+  "plan": {
+    "namingFormat": "{date}-{issue}-{slug}",
+    "dateFormat": "YYMMDD-HHmm",
+    "issuePrefix": "GH-",
+    "reportsDir": "reports",
+    "resolution": {
+      "order": ["session", "branch"],
+      "branchPattern": "(?:feat|fix|chore|refactor|docs)/(?:[^/]+/)?(.+)"
+    },
+    "validation": {
+      "mode": "prompt",
+      "minQuestions": 3,
+      "maxQuestions": 8,
+      "focusAreas": ["assumptions", "risks", "tradeoffs", "architecture"]
+    }
+  },
+  "paths": {
+    "docs": "docs",
+    "plans": "plans",
+    "reports": "plans/reports"
+  },
+  "locale": {
+    "thinkingLanguage": null,
+    "responseLanguage": "vi"
+  },
+  "trust": {
+    "passphrase": null,
+    "enabled": false
+  },
+  "project": {
+    "type": "auto",
+    "packageManager": "auto",
+    "framework": "auto"
+  },
+  "gemini": {
+    "model": "gemini-3-flash-preview"
+  },
+  "skills": {
+    "research": {
+      "useGemini": false
+    }
+  },
+  "hooks": {},
+  "assertions": []
+}

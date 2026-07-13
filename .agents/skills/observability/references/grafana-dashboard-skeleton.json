@@ -1,0 +1,80 @@
+{
+  "uid": "{{DASHBOARD_SLUG}}",
+  "title": "{{DASHBOARD_TITLE}}",
+  "tags": ["{{TAG_1}}", "{{TAG_2}}"],
+  "schemaVersion": 39,
+  "version": 1,
+  "refresh": "30s",
+  "time": { "from": "now-6h", "to": "now" },
+  "templating": {
+    "list": [
+      {
+        "__comment": "Example variable — remove or replace with project-specific labels.",
+        "name": "env",
+        "type": "query",
+        "datasource": { "type": "prometheus", "uid": "victoriametrics" },
+        "query": "label_values(up, env)",
+        "includeAll": true,
+        "multi": false,
+        "refresh": 2
+      }
+    ]
+  },
+  "panels": [
+    {
+      "__comment": "Stat panel — count of active instances. Replace expr as needed.",
+      "id": 1,
+      "type": "stat",
+      "title": "{{STAT_PANEL_TITLE}}",
+      "gridPos": { "h": 5, "w": 6, "x": 0, "y": 0 },
+      "datasource": { "type": "prometheus", "uid": "victoriametrics" },
+      "targets": [
+        {
+          "refId": "A",
+          "expr": "{{PROMQL_EXPRESSION}}",
+          "instant": true
+        }
+      ],
+      "fieldConfig": { "defaults": { "unit": "none" }, "overrides": [] }
+    },
+    {
+      "__comment": "Log panel — recent structured logs from Loki. Adjust selector.",
+      "id": 2,
+      "type": "logs",
+      "title": "{{LOG_PANEL_TITLE}}",
+      "gridPos": { "h": 8, "w": 24, "x": 0, "y": 5 },
+      "datasource": { "type": "loki", "uid": "loki" },
+      "targets": [
+        {
+          "refId": "A",
+          "expr": "{app=\"{{APP_LABEL}}\", env=~\"$env\"}"
+        }
+      ],
+      "options": {
+        "showTime": true,
+        "showLabels": false,
+        "wrapLogMessage": true,
+        "sortOrder": "Descending"
+      }
+    },
+    {
+      "__comment": "Time-series panel — metric over time. Replace expr and unit.",
+      "id": 3,
+      "type": "timeseries",
+      "title": "{{TIMESERIES_PANEL_TITLE}}",
+      "gridPos": { "h": 8, "w": 24, "x": 0, "y": 13 },
+      "datasource": { "type": "prometheus", "uid": "victoriametrics" },
+      "targets": [
+        {
+          "refId": "A",
+          "expr": "{{TIMESERIES_PROMQL}}",
+          "legendFormat": "{{label_name}}"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": { "unit": "{{UNIT}}", "min": 0 },
+        "overrides": []
+      }
+    }
+  ]
+}

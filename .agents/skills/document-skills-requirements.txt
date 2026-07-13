@@ -1,0 +1,24 @@
+# Python deps for the office/document skills: docx, xlsx, pptx, pdf
+# Install into the shared skills venv:
+#   Windows: .claude\skills\.venv\Scripts\python.exe -m pip install -r .claude\skills\document-skills-requirements.txt
+#   Linux/macOS: .claude/skills/.venv/bin/python3 -m pip install -r .claude/skills/document-skills-requirements.txt
+
+# Office XML pack/unpack/validate (docx, xlsx, pptx)
+lxml
+defusedxml
+
+# xlsx
+openpyxl
+pandas
+
+# pptx
+markitdown[pptx]
+Pillow
+
+# pdf
+pypdf
+pdfplumber
+reportlab
+pdf2image
+# OCR for scanned PDFs (also needs the Tesseract binary on PATH)
+pytesseract
