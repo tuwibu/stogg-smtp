@@ -1,0 +1,19 @@
+services:
+  smtp:
+    image: registry.upgo.io/stogg-smtp:${IMAGE_TAG:-latest}
+    restart: unless-stopped
+    init: true
+    environment:
+      NODE_ENV: production
+      SMTP_HOST: 0.0.0.0
+      SMTP_PORT: "2525"
+      SMTP_MAX_SIZE: ${SMTP_MAX_SIZE:-10485760}
+      MULTIMAIL_API_URL: ${MULTIMAIL_API_URL:?Set MULTIMAIL_API_URL}
+      MULTIMAIL_API_KEY: ${MULTIMAIL_API_KEY:?Set MULTIMAIL_API_KEY}
+    ports:
+      - "${SMTP_PORT:-25}:2525"
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "3"

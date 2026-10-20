@@ -31,9 +31,9 @@ SMTP_PORT=25
 SMTP_HOST=0.0.0.0
 SMTP_MAX_SIZE=10485760
 
-# API Configuration
-API_URL=https://api.example.com/email
-API_KEY=your-api-key-here
+# Multimail API
+MULTIMAIL_API_URL=https://multimail.example.com
+MULTIMAIL_API_KEY=your-system-api-key
 ```
 
 ## Running the app
@@ -47,11 +47,44 @@ yarn build
 yarn start:prod
 ```
 
+## Docker
+
+The image uses Node.js 24 Alpine and runs as `node` on container port 2525.
+Compose publishes it on `SMTP_PORT` (default: 25); `SMTP_HOST` is fixed to
+`0.0.0.0` inside the container.
+
+```bash
+cp .env.example .env
+# Set MULTIMAIL_API_URL and MULTIMAIL_API_KEY in .env.
+docker login registry.upgo.io
+docker compose pull
+docker compose up -d
+docker compose logs -f smtp
+```
+
+Set `IMAGE_TAG=sha-<full-commit-sha>` in `.env` to pin a release instead of `latest`.
+To build locally:
+
+```bash
+docker build -t registry.upgo.io/stogg-smtp:local .
+IMAGE_TAG=local docker compose up -d
+```
+
+## CI
+
+`.github/workflows/ci.yml` builds pull requests without publishing. Pushes to
+`master`, `v*` tags, and manual runs build and push to `registry.upgo.io/stogg-smtp`.
+The default branch publishes `latest`; builds also publish `sha-<full-commit-sha>`
+and version-tag builds publish the Git tag.
+
+GitHub Actions requires repository secrets `REGISTRY_USERNAME` and
+`REGISTRY_PASSWORD`. Registry credentials never enter the image build.
+
 ## How it works
 
 1. SMTP server listens for incoming emails
 2. Email is parsed using mailparser
-3. Email data (from, to, subject, body, html, attachments) is sent to API via axios PUT request
+3. Email data (from, to, subject, text, HTML and message ID) is sent to `MULTIMAIL_API_URL/api/emails` via axios POST request
 4. API key is sent in `x-api-key` header
 
 ## Project Structure
