@@ -76,6 +76,7 @@ IMAGE_TAG=local docker compose up -d
 `master`, `v*` tags, and manual runs build and push to `registry.upgo.io/stogg-smtp`.
 The default branch publishes `latest`; builds also publish `sha-<full-commit-sha>`
 and version-tag builds publish the Git tag.
+Action versions are pinned to explicit stable releases using the Node.js 24 runtime.
 
 GitHub Actions requires repository secrets `REGISTRY_USERNAME` and
 `REGISTRY_PASSWORD`. Registry credentials never enter the image build.
